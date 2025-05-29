@@ -19,7 +19,7 @@ pipeline {
          stage('Stop Old App') {
             steps {
                 sh '''
-                PID=$(lsof -t -i:8080)
+                PID=$(lsof -t -i:8090)
                 if [ -n "$PID" ]; then
                     kill -9 $PID
                 fi

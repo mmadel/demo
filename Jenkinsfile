@@ -47,7 +47,7 @@ pipeline {
         rm -f $LOG_FILE
 
         echo "🚀 Starting Spring Boot app..."
-        nohup java -jar $DEPLOY_DIR/$JAR_NAME > $LOG_FILE 2>&1 &
+        nohup java -jar $DEPLOY_DIR/$JAR_NAME --server.port=8090 --server.address=0.0.0.0 > $LOG_FILE 2>&1 &
 
         sleep 2
 
@@ -62,6 +62,7 @@ pipeline {
         '''
     }
 }
+
 
     }
     post{

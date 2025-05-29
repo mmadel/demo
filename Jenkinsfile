@@ -12,24 +12,25 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                bat 'mvn clean package -DskipTests=false'
+                sh 'mvn clean package -DskipTests=false'
             }
         }
-        stage('Stop Old App') {
+         stage('Stop Old App') {
             steps {
-                bat '''
-                for /f "tokens=2" %%i in ('netstat -ano ^| findstr :8080') do (
-                    taskkill /PID %%i /F
-                )
+                sh '''
+                PID=$(lsof -t -i:8080)
+                if [ -n "$PID" ]; then
+                    kill -9 $PID
+                fi
                 '''
             }
         }
         stage('Run New App') {
             steps {
-                bat '''
-                if not exist %DEPLOY_DIR% mkdir %DEPLOY_DIR%
-                copy %JAR_PATH% %DEPLOY_DIR%\\%JAR_NAME%
-                start /b java -jar %DEPLOY_DIR%\\%JAR_NAME% > %LOG_FILE% 2>&1
+                sh '''
+                mkdir -p $DEPLOY_DIR
+                cp $JAR_PATH $DEPLOY_DIR/$JAR_NAME
+                nohup java -jar $DEPLOY_DIR/$JAR_NAME > $DEPLOY_DIR/app.log 2>&1 &
                 '''
             }
         }

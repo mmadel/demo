@@ -42,7 +42,8 @@ pipeline {
         stage('Run') {
             steps {
                 sh '''
-                nohup java -jar $DEPLOY_DIR/$JAR_NAME > $LOG_FILE
+                nohup java -jar $DEPLOY_DIR/$JAR_NAME > $LOG_FILE 2>&1 &
+                echo "✅ App started in background."
                 '''
             }
         }

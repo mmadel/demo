@@ -4,7 +4,7 @@ pipeline {
         maven 'maven-3.9.9'  // Name defined in Jenkins Global Tools Configuration
     }
     environment {
-        APP_NAME = 'myapp'
+        APP_NAME = 'demo'
         DEPLOY_DIR = "/opt/${APP_NAME}"
         JAR_NAME = "${APP_NAME}-0.0.1-SNAPSHOT.jar"  // ✅ use actual filename from target/
         JAR_PATH = "target/${JAR_NAME}"

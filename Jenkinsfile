@@ -19,9 +19,13 @@ pipeline {
          stage('Stop Old App') {
             steps {
                 sh '''
-                PID=$(lsof -t -i:8090)
+                echo "🔍 Checking if anything is running on port $APP_PORT..."
+                PID=$(lsof -ti :$APP_PORT || true)
                 if [ -n "$PID" ]; then
+                    echo "⚠️ Stopping process on port $APP_PORT (PID: $PID)"
                     kill -9 $PID
+                else
+                    echo "✅ Nothing is running on port $APP_PORT"
                 fi
                 '''
             }
@@ -38,7 +42,7 @@ pipeline {
         stage('Run') {
             steps {
                 sh '''
-                nohup java -jar $DEPLOY_DIR/$JAR_NAME > $LOG_FILE 2>&1 &
+                nohup java -jar $DEPLOY_DIR/$JAR_NAME > $LOG_FILE
                 '''
             }
         }

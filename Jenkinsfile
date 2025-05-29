@@ -5,9 +5,8 @@ pipeline {
     }
     environment {
         JAR_NAME = 'app.jar'
-        JAR_PATH = 'target\\app.jar'
-        DEPLOY_DIR = 'C:\\apps\\springboot\\test'
-        LOG_FILE = 'C:\\apps\\springboot\\test\\app.log'
+        JAR_PATH = 'target/app.jar'
+        DEPLOY_DIR = '/home/jenkins/app'
     }
     stages {
         stage('Build') {

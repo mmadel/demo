@@ -40,28 +40,29 @@ pipeline {
                 '''
             }
         }
-        stage('Run') {
+stage('Run') {
             steps {
                 sh '''
         echo "🧹 Cleaning up old logs..."
         rm -f $LOG_FILE
 
         echo "🚀 Starting Spring Boot app..."
-        nohup java -jar $DEPLOY_DIR/$JAR_NAME --server.port=8090 --server.address=0.0.0.0 > $LOG_FILE 2>&1 &
+        setsid java -jar $DEPLOY_DIR/$JAR_NAME  > $LOG_FILE 2>&1 &
 
-        sleep 2
+        sleep 3
 
         echo "🔍 Checking if app started..."
-        if ! ps aux | grep "$JAR_NAME" | grep -v grep > /dev/null; then
-            echo "❌ App did not start correctly. Check the log at $LOG_FILE"
+        if ! lsof -i :8090 > /dev/null; then
+            echo "❌ App not listening on port 8090"
             cat $LOG_FILE
             exit 1
-        else
-            echo "✅ App started successfully."
         fi
+
+        echo "✅ App started and listening on port 8090"
         '''
     }
 }
+
 
 
     }

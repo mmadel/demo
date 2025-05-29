@@ -9,6 +9,7 @@ pipeline {
         JAR_NAME = "${APP_NAME}-0.0.1-SNAPSHOT.jar"  // ✅ use actual filename from target/
         JAR_PATH = "target/${JAR_NAME}"
         LOG_FILE = "${DEPLOY_DIR}/${APP_NAME}.log"
+        APP_PORT = 8090
     }
     stages {
         stage('Build') {

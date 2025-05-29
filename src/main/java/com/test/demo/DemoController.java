@@ -11,6 +11,6 @@ public class DemoController {
     @ResponseBody
     public ResponseEntity<String> getAll() {
         return ResponseEntity.ok()
-                .body("Ping push notification...!!!!");
+                .body("Ping push notification1...!!!!");
     }
 }

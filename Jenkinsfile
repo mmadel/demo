@@ -5,8 +5,10 @@ pipeline {
     }
     environment {
         APP_NAME = 'myapp'
-        APP_PORT = '8080'
         DEPLOY_DIR = "/opt/${APP_NAME}"
+        JAR_NAME = "${APP_NAME}-0.0.1-SNAPSHOT.jar"  // ✅ use actual filename from target/
+        JAR_PATH = "target/${JAR_NAME}"
+        LOG_FILE = "${DEPLOY_DIR}/${APP_NAME}.log"
     }
     stages {
         stage('Build') {
@@ -24,12 +26,19 @@ pipeline {
                 '''
             }
         }
-        stage('Run New App') {
+        stage('Deploy') {
             steps {
                 sh '''
                 mkdir -p $DEPLOY_DIR
+                echo "Copying built JAR: $JAR_PATH to $DEPLOY_DIR"
                 cp $JAR_PATH $DEPLOY_DIR/$JAR_NAME
-                nohup java -jar $DEPLOY_DIR/$JAR_NAME > $DEPLOY_DIR/app.log 2>&1 &
+                '''
+            }
+        }
+        stage('Run') {
+            steps {
+                sh '''
+                nohup java -jar $DEPLOY_DIR/$JAR_NAME > $LOG_FILE 2>&1 &
                 '''
             }
         }

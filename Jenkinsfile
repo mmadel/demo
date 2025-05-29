@@ -43,11 +43,26 @@ pipeline {
         stage('Run') {
             steps {
                 sh '''
-                nohup java -jar $DEPLOY_DIR/$JAR_NAME > $LOG_FILE 2>&1 &
-                echo "✅ App started in background."
-                '''
-            }
-        }
+        echo "🧹 Cleaning up old logs..."
+        rm -f $LOG_FILE
+
+        echo "🚀 Starting Spring Boot app..."
+        nohup java -jar $DEPLOY_DIR/$JAR_NAME > $LOG_FILE 2>&1 &
+
+        sleep 2
+
+        echo "🔍 Checking if app started..."
+        if ! ps aux | grep "$JAR_NAME" | grep -v grep > /dev/null; then
+            echo "❌ App did not start correctly. Check the log at $LOG_FILE"
+            cat $LOG_FILE
+            exit 1
+        else
+            echo "✅ App started successfully."
+        fi
+        '''
+    }
+}
+
     }
     post{
         failure {

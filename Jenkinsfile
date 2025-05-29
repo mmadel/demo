@@ -1,85 +1,78 @@
 pipeline {
     agent any
-     tools {
-        maven 'maven-3.9.9'  // Name defined in Jenkins Global Tools Configuration
-    }
+
     environment {
-        APP_NAME = 'demo'
-        DEPLOY_DIR = "/opt/${APP_NAME}"
-        JAR_NAME = "${APP_NAME}-0.0.1-SNAPSHOT.jar"  // ✅ use actual filename from target/
-        JAR_PATH = "target/${JAR_NAME}"
-        LOG_FILE = "${DEPLOY_DIR}/${APP_NAME}.log"
-        APP_PORT = 8090
+        DEPLOY_DIR = "/opt/demo"
+        JAR_NAME = "demo-0.0.1-SNAPSHOT.jar"
+        LOG_FILE = "/opt/demo/demo.log"
+        SSH_USER = "jenkins"             // Change this to your VPS user
+        SSH_HOST = "localhost"
+        SSH_CREDENTIALS = "jenkins-cred"  // Replace with your Jenkins SSH credential ID
+        APP_PORT = "8090"
     }
+
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Build') {
             steps {
-                sh 'mvn clean package -DskipTests=false'
+                sh 'mvn clean package -DskipTests'
             }
         }
-         stage('Stop Old App') {
+
+        stage('Deploy & Run via SSH') {
             steps {
-                sh '''
-                echo "🔍 Checking if anything is running on port $APP_PORT..."
-                PID=$(lsof -ti :$APP_PORT || true)
-                if [ -n "$PID" ]; then
-                    echo "⚠️ Stopping process on port $APP_PORT (PID: $PID)"
-                    kill -9 $PID
-                else
-                    echo "✅ Nothing is running on port $APP_PORT"
-                fi
-                '''
+                sshagent([env.SSH_CREDENTIALS]) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${env.SSH_USER}@${env.SSH_HOST} '
+                        echo "Stopping old app if running..."
+                        pkill -f ${env.JAR_NAME} || true
+
+                        echo "Cleaning up logs..."
+                        rm -f ${env.LOG_FILE}
+
+                        echo "Starting new Spring Boot app..."
+                        setsid java -jar ${env.DEPLOY_DIR}/${env.JAR_NAME} --server.port=${env.APP_PORT} --server.address=0.0.0.0 > ${env.LOG_FILE} 2>&1 &
+
+                        sleep 5
+
+                        echo "Checking if app is listening on port ${env.APP_PORT}..."
+                        if ! lsof -i :${env.APP_PORT} > /dev/null; then
+                            echo "App failed to start or listen on port ${env.APP_PORT}"
+                            echo "Last 50 lines of log:"
+                            tail -n 50 ${env.LOG_FILE}
+                            exit 1
+                        fi
+
+                        echo "App started successfully and listening on port ${env.APP_PORT}"
+                    '
+                    """
+                }
             }
         }
-        stage('Deploy') {
+
+        stage('Post-Deployment Health Check') {
             steps {
-                sh '''
-                mkdir -p $DEPLOY_DIR
-                echo "Copying built JAR: $JAR_PATH to $DEPLOY_DIR"
-                cp $JAR_PATH $DEPLOY_DIR/$JAR_NAME
-                '''
+                // Simple curl check to localhost from Jenkins host
+                sh """
+                ssh -o StrictHostKeyChecking=no ${env.SSH_USER}@${env.SSH_HOST} '
+                    curl --fail http://localhost:${env.APP_PORT}/demp/api/ping || exit 1
+                '
+                """
             }
         }
-stage('Run') {
-            steps {
-                sh '''
-        echo "🧹 Cleaning up old app and logs..."
-        pkill -f "$JAR_NAME" || true
-        rm -f $LOG_FILE
-
-        echo "🚀 Launching Spring Boot app..."
-
-        # Fully detach the process from Jenkins using setsid
-        setsid java -jar $DEPLOY_DIR/$JAR_NAME \
-            --server.port=8090 \
-            --server.address=0.0.0.0 \
-            > $LOG_FILE 2>&1 &
-
-        sleep 5
-
-        echo "🔍 Checking if app started..."
-
-        if ! lsof -i :8090 > /dev/null; then
-            echo "❌ App did not bind to port 8090. Here are the logs:"
-            cat $LOG_FILE
-            exit 1
-        fi
-
-        echo "✅ App started and listening on port 8090"
-        '''
     }
-}
 
-
-
-
-    }
-    post{
-        failure {
-            echo 'Build failed!'
-        }
+    post {
         success {
-            echo 'Build successful!'
+            echo "Deployment successful and app is healthy!"
+        }
+        failure {
+            echo "Deployment failed! Check logs and Jenkins console output."
         }
     }
 }

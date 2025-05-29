@@ -19,6 +19,14 @@ pipeline {
                 archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
             }
         }
+        stage('Run New JAR') {
+            steps {
+                sh '''
+                    echo "Running new JAR..."
+                    nohup java -jar $JAR_PATH > app.log 2>&1 &
+                '''
+            }
+        }
     }
     post{
         failure {

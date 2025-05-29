@@ -3,9 +3,7 @@ pipeline {
     stages {
         stage('Build') { 
             steps {
-                withMaven() {
-                    sh 'mvn package'
-                }
+                mvn 'clean install'
             }
         }
         stage('Test') { 

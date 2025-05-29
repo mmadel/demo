@@ -43,17 +43,24 @@ pipeline {
 stage('Run') {
             steps {
                 sh '''
-        echo "🧹 Cleaning up old logs..."
+        echo "🧹 Cleaning up old app and logs..."
+        pkill -f "$JAR_NAME" || true
         rm -f $LOG_FILE
 
-        echo "🚀 Starting Spring Boot app..."
-        setsid java -jar $DEPLOY_DIR/$JAR_NAME  > $LOG_FILE 2>&1 &
+        echo "🚀 Launching Spring Boot app..."
 
-        sleep 3
+        # Fully detach the process from Jenkins using setsid
+        setsid java -jar $DEPLOY_DIR/$JAR_NAME \
+            --server.port=8090 \
+            --server.address=0.0.0.0 \
+            > $LOG_FILE 2>&1 &
+
+        sleep 5
 
         echo "🔍 Checking if app started..."
+
         if ! lsof -i :8090 > /dev/null; then
-            echo "❌ App not listening on port 8090"
+            echo "❌ App did not bind to port 8090. Here are the logs:"
             cat $LOG_FILE
             exit 1
         fi
@@ -62,6 +69,7 @@ stage('Run') {
         '''
     }
 }
+
 
 
 

@@ -6,18 +6,26 @@ pipeline {
     stages {
         stage('Build') { 
             steps {
-                sh 'mvn clean install'
+                sh 'mvn clean compile'
             }
         }
-        stage('Test') { 
+        stage('Package') {
             steps {
-                echo 'test application'
+               sh 'mvn package'
             }
         }
-        stage('Deploy') { 
+        stage('Archive') {
             steps {
-                echo 'deploy application'
+                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
             }
+        }
+    }
+    post{
+        failure {
+            echo 'Build failed!'
+        }
+        success {
+            echo 'Build successful!'
         }
     }
 }

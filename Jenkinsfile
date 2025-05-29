@@ -4,9 +4,9 @@ pipeline {
         maven 'maven-3.9.9'  // Name defined in Jenkins Global Tools Configuration
     }
     environment {
-        JAR_NAME = 'app.jar'
-        JAR_PATH = 'target/app.jar'
-        DEPLOY_DIR = '/home/jenkins/app'
+        APP_NAME = 'myapp'
+        APP_PORT = '8080'
+        DEPLOY_DIR = "/opt/${APP_NAME}"
     }
     stages {
         stage('Build') {

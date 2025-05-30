@@ -21,6 +21,7 @@ pipeline {
 					def jarName = sh(script: "ls target/*.jar | head -n 1", returnStdout: true).trim()
 
                     sh """
+                        sudo mkdir -p ${DEPLOY_DIR}
                         sudo cp ${jarName} ${DEPLOY_DIR}/${APP_NAME}.jar
                         sudo chown -R $USER:$USER ${DEPLOY_DIR}
                     """
@@ -30,7 +31,7 @@ pipeline {
 
         stage('Restart Service') {
 			steps {
-				sh "sudo /usr/bin/systemctl restart ${SERVICE_NAME}"
+				sh "sudo systemctl restart ${SERVICE_NAME}"
             }
         }
     }

@@ -21,7 +21,6 @@ pipeline {
 					def jarName = sh(script: "ls target/*.jar | head -n 1", returnStdout: true).trim()
 
                     sh """
-                        sudo mkdir -p ${DEPLOY_DIR}
                         sudo cp ${jarName} ${DEPLOY_DIR}/${APP_NAME}.jar
                         sudo chown -R $USER:$USER ${DEPLOY_DIR}
                     """

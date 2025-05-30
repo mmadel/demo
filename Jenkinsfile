@@ -9,9 +9,9 @@ pipeline {
 
     stages {
 
-        stage('Build') {
+		stage('Build') {
 			steps {
-				sh './mvnw clean package -DskipTests'
+				sh 'mvn clean package -DskipTests'
             }
         }
 

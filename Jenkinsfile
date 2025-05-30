@@ -30,7 +30,7 @@ pipeline {
 
         stage('Restart Service') {
 			steps {
-				sh "sudo systemctl restart ${SERVICE_NAME}"
+				sh "sudo /usr/bin/systemctl restart ${SERVICE_NAME}"
             }
         }
     }

@@ -20,7 +20,7 @@ public class DemoController {
                 .body("I so am happy...!!!!");
     }
 
-    @PostMapping
+    @PostMapping("create")
     public ResponseEntity<?> createPerson(@RequestBody com.test.demo.entity.Person person) {
         personRepository.save(person);
         return ResponseEntity.ok().build();

@@ -21,14 +21,13 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sshagent (credentials: ['jenkins']) {
+                ssh agent (credentials: ['ssh-test-env']) {
                     script {
                         def jarName = sh(script: "ls target/*.jar | head -n 1", returnStdout: true).trim()
 
                         sh """
                             scp -P ${REMOTE_SSH_PORT} ${jarName} ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOY_DIR}/${APP_NAME}.jar
-                            ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} \\
-                                "sudo systemctl restart ${SERVICE_NAME} && sleep 10"
+                            ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} "sudo systemctl restart ${SERVICE_NAME} && sleep 10"
                         """
                     }
                 }
@@ -37,7 +36,7 @@ pipeline {
 
         stage('Sanity Check') {
             steps {
-                sshagent (credentials: ['ssh-test-env']) {
+                ssh agent (credentials: ['ssh-test-env']) {
                     script {
                         def response = sh(
                             script: "ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} \\

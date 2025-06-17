@@ -20,7 +20,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sshagent (credentials: ['ssh-test-env']) {
+                sshagent (credentials: ['test-env-user']) {
                     script {
                         def jarName = sh(script: "ls target/*.jar | head -n 1", returnStdout: true).trim()
 
@@ -33,7 +33,7 @@ pipeline {
 
         stage('Sanity Check') {
             steps {
-                sshagent (credentials: ['ssh-test-env']) {
+                sshagent (credentials: ['test-env-user']) {
                     script {
                         def response = sh(
                             script: "ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} 'curl -s -o /dev/null -w \"%{http_code}\" ${HEALTH_CHECK_URL}'",

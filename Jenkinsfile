@@ -20,12 +20,15 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sshagent (credentials: ['test-env-user']) {
+                sshagent (credentials: ['ssh-test-env']) {
                     script {
                         def jarName = sh(script: "ls target/*.jar | head -n 1", returnStdout: true).trim()
 
-                        // Ensure deploy directory exists
-                        sh "ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} 'mkdir -p ${DEPLOY_DIR}'"
+                        // Create the directory with sudo and change ownership
+                        sh """
+                            ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} \\
+                                'sudo mkdir -p ${DEPLOY_DIR} && sudo chown ${REMOTE_USER}:${REMOTE_USER} ${DEPLOY_DIR}'
+                        """
 
                         // Copy JAR to remote server
                         sh "scp -P ${REMOTE_SSH_PORT} ${jarName} ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOY_DIR}/${APP_NAME}.jar"
@@ -36,8 +39,6 @@ pipeline {
                 }
             }
         }
-
-
         stage('Sanity Check') {
             steps {
                 sshagent (credentials: ['test-env-user']) {

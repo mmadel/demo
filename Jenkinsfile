@@ -5,9 +5,9 @@ pipeline {
         APP_NAME = "demo"
         DEPLOY_DIR = "/opt/demo"
         SERVICE_NAME = "demo"
-        HEALTH_CHECK_URL = "http://localhost:8090/demo/api/actuator/health" // remote service URL
-        REMOTE_USER = "testuser"
-        REMOTE_HOST = "test-env" // use container name, IP, or hostname
+        HEALTH_CHECK_URL = "http://161.97.126.192:8090/demo/api/actuator/health" // remote service URL
+        REMOTE_USER = "root"
+        REMOTE_HOST = "161.97.126.192" // use container name, IP, or hostname
         REMOTE_SSH_PORT = "22"   // change to 2222 if needed
     }
 

@@ -20,16 +20,23 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sshagent (credentials: ['test-env-user']) {
+                sshagent (credentials: ['ssh-test-env']) {
                     script {
                         def jarName = sh(script: "ls target/*.jar | head -n 1", returnStdout: true).trim()
 
+                        // Ensure deploy directory exists
+                        sh "ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} 'mkdir -p ${DEPLOY_DIR}'"
+
+                        // Copy JAR to remote server
                         sh "scp -P ${REMOTE_SSH_PORT} ${jarName} ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOY_DIR}/${APP_NAME}.jar"
+
+                        // Restart service
                         sh "ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} 'sudo systemctl restart ${SERVICE_NAME} && sleep 10'"
                     }
                 }
             }
         }
+
 
         stage('Sanity Check') {
             steps {

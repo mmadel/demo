@@ -20,7 +20,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sshagent (credentials: ['ssh-test-env']) {
+                sshagent (credentials: ['test-env-user']) {
                     script {
                         def jarName = sh(script: "ls target/*.jar | head -n 1", returnStdout: true).trim()
 

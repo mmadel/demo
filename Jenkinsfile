@@ -18,27 +18,52 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                sshagent (credentials: ['test-env-user']) {
-                    script {
-                        def jarName = sh(script: "ls target/*.jar | head -n 1", returnStdout: true).trim()
+stage('Deploy') {
+    steps {
+        sshagent (credentials: ['test-env-user']) {
+            script {
+                def jarName = sh(script: "ls target/*.jar | head -n 1", returnStdout: true).trim()
 
-                        // Create the directory with sudo and change ownership
-                        sh """
-                            ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} \\
-                                'sudo mkdir -p ${DEPLOY_DIR} && sudo chown ${REMOTE_USER}:${REMOTE_USER} ${DEPLOY_DIR}'
-                        """
+                // Create deploy dir and ensure service file exists
+                sh """
+                    ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} '
+                        sudo mkdir -p ${DEPLOY_DIR} && sudo chown ${REMOTE_USER}:${REMOTE_USER} ${DEPLOY_DIR}
 
-                        // Copy JAR to remote server
-                        sh "scp -P ${REMOTE_SSH_PORT} ${jarName} ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOY_DIR}/${APP_NAME}.jar"
+                        SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
+                        if [ ! -f "\$SERVICE_FILE" ]; then
+                            echo "Creating missing service file at \$SERVICE_FILE"
+                            sudo bash -c "cat > \$SERVICE_FILE" <<EOF
+[Unit]
+Description=${APP_NAME} Spring Boot Application
+After=network.target
 
-                        // Restart service
-                        sh "ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} 'sudo systemctl restart ${SERVICE_NAME} && sleep 10'"
-                    }
-                }
+[Service]
+User=${REMOTE_USER}
+ExecStart=/usr/bin/java -jar ${DEPLOY_DIR}/${APP_NAME}.jar
+SuccessExitStatus=143
+Restart=always
+RestartSec=5
+SyslogIdentifier=${APP_NAME}
+
+[Install]
+WantedBy=multi-user.target
+EOF
+                            sudo systemctl daemon-reload
+                            sudo systemctl enable ${SERVICE_NAME}
+                        fi
+                    '
+                """
+
+                // Copy JAR to remote server
+                sh "scp -P ${REMOTE_SSH_PORT} ${jarName} ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOY_DIR}/${APP_NAME}.jar"
+
+                // Restart service
+                sh "ssh -p ${REMOTE_SSH_PORT} ${REMOTE_USER}@${REMOTE_HOST} 'sudo systemctl restart ${SERVICE_NAME} && sleep 10'"
             }
         }
+    }
+}
+
         stage('Sanity Check') {
             steps {
                 sshagent (credentials: ['test-env-user']) {

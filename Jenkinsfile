@@ -40,6 +40,8 @@ After=network.target
 [Service]
 User=${REMOTE_USER}
 ExecStart=/usr/bin/java -jar ${DEPLOY_DIR}/${APP_NAME}.jar
+StandardOutput=file:/var/log/${DEPLOY_DIR}/${APP_NAME}.log
+StandardError=file:/var/log/${DEPLOY_DIR}/${APP_NAME}-error.log
 SuccessExitStatus=143
 Restart=always
 RestartSec=5

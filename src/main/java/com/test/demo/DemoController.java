@@ -17,7 +17,7 @@ public class DemoController {
     @ResponseBody
     public ResponseEntity<String> getAll() {
         return ResponseEntity.ok()
-                .body("Last Ping ...!!!!");
+                .body("Last Ping ...!!!");
     }
 
     @PostMapping("create")
